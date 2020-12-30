@@ -1,0 +1,55 @@
+- hosts: all
+  tasks:
+   - name: Adding docker repository
+     yum_repository:
+              name: docker
+              description: Docker repo
+              baseurl: https://download.docker.com/linux/centos/7/x86_64/stable
+              gpgcheck: no
+
+   - name: Installing docker software
+     command: "yum install docker-ce --nobest -y"
+
+   - name: Starting docker service 
+     service:
+             name: docker
+             state: started
+   
+   - name: Installing python software
+     package:
+             name: python36
+             state: started
+
+   - name: Installing docker python library
+     pip:
+             name: docker-py
+            
+   - name : Pulling httpd webserver OS image from docker hub
+     docker_image:
+             name: httpd
+             source: pull
+
+   - name: Launching httpd webserver container from docker image
+     docker_container:
+             name: webserver
+             image: httpd
+             state: started
+             ports:
+                     - "8081:80"
+             volumes:
+                     - "/var/www/html/:/usr/local/apache2/htdocs/"
+
+   - name: Copying a webpage to the httpd webserver
+     copy:
+             src: "Ansible.html"
+             dest: "/var/www/html/"
+
+   - name: Disabling SELinux
+     selinux:
+             state: disabled
+
+   - name: Stop and disable firewalld.
+     service:
+       name: firewalld
+       state: stopped
+       enabled: False
